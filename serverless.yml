@@ -1,0 +1,71 @@
+service: aws-alumnos
+frameworkVersion: '2 || 3'
+
+plugins:
+  - serverless-bundle
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  memorySize: 128
+  region: us-east-2
+  stage: ${opt:stage, 'dev'}
+  lambdaHashingVersion: 20201221
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:DeleteItem
+        - dynamodb:Scan
+        - dynamodb:UpdateItem
+      Resource: arn:aws:dynamodb:us-east-2:*:table/AlumnosTable  #Escribe el recurso de la tabla de DynamoDB
+
+resources:
+  Resources:
+    AlumnosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: AlumnosTable
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+functions:
+  crearAlumno:
+    handler: src/handlers/crearAlumno.handler
+    events:
+      - httpApi:
+          path: /alumnos
+          method: POST
+  listarAlumnos:
+    handler: src/handlers/listarAlumnos.handler
+    events:
+      - httpApi:
+          path: /alumnos
+          method: GET
+  obtenerAlumno:
+    handler: src/handlers/obtenerAlumno.handler
+    events:
+      - httpApi:
+          path: /alumnos/{id}
+          method: GET
+  actualizarAlumno:
+    handler: src/handlers/actualizarAlumno.handler
+    events:
+      - httpApi:
+          path: /alumnos/{id}
+          method: PUT
+  eliminarAlumno:
+    handler: src/handlers/eliminarAlumno.handler
+    events:
+      - httpApi:
+          path: /alumnos/{id}
+          method: DELETE
+custom:
+  bundle:
+    linting: false
